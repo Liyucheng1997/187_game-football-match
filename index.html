@@ -3,203 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>热血绿茵 · 3D足球</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #0a1a0a; }
-    body { font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif; color: #fff; }
-    #app { position: fixed; inset: 0; }
-    canvas { display: block; }
-
-    .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 20; }
-    .hidden { display: none !important; }
-
-    /* ===== 主菜单 ===== */
-    #menu { background: radial-gradient(ellipse at 50% 30%, rgba(10,40,15,.55), rgba(2,10,4,.88)); backdrop-filter: blur(3px); }
-    .panel { text-align: center; padding: 36px 44px; max-width: 720px; width: 92%; background: rgba(8, 24, 12, .72);
-      border: 1px solid rgba(120,255,160,.18); border-radius: 24px; box-shadow: 0 24px 80px rgba(0,0,0,.6); }
-    .panel h1 { font-size: 52px; letter-spacing: 6px; background: linear-gradient(180deg,#fff,#9fe8a8);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 4px 30px rgba(80,255,120,.25); }
-    .panel .tag { margin-top: 8px; color: #9fd8a8; font-size: 15px; letter-spacing: 2px; }
-    .section-label { margin: 26px 0 10px; font-size: 14px; color: #7fb98a; letter-spacing: 4px; }
-
-    .diff-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .diff-btn { cursor: pointer; padding: 14px 6px 12px; border-radius: 14px; border: 2px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05); transition: all .15s; text-align: center; }
-    .diff-btn:hover { transform: translateY(-3px); background: rgba(255,255,255,.1); }
-    .diff-btn.active { border-color: #6fe888; background: rgba(90,230,120,.16); box-shadow: 0 0 22px rgba(90,230,120,.28); }
-    .diff-btn .emoji { font-size: 30px; }
-    .diff-btn .name { font-size: 17px; font-weight: 700; margin-top: 6px; }
-    .diff-btn .desc { font-size: 11px; color: #a8c8ae; margin-top: 4px; line-height: 1.5; }
-
-    .dur-row { display: flex; justify-content: center; gap: 10px; }
-    .dur-btn { cursor: pointer; padding: 8px 22px; border-radius: 999px; border: 2px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05); font-size: 14px; transition: all .15s; color: #fff; }
-    .dur-btn.active { border-color: #6fc8ff; background: rgba(90,180,255,.18); }
-
-    #startBtn { margin-top: 30px; cursor: pointer; font-size: 22px; font-weight: 800; letter-spacing: 8px; color: #06220c;
-      padding: 16px 66px; border: none; border-radius: 999px; background: linear-gradient(180deg, #8dff9f, #34c95b);
-      box-shadow: 0 10px 34px rgba(60,220,100,.45), inset 0 2px 0 rgba(255,255,255,.5); transition: transform .12s; }
-    #startBtn:hover { transform: scale(1.05); }
-    #startBtn:active { transform: scale(.97); }
-
-    .controls-hint { margin-top: 26px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 13px; color: #bcd8c0; }
-    .controls-hint b { display: inline-block; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22);
-      border-radius: 6px; padding: 1px 8px; margin-right: 5px; font-weight: 600; color: #fff; }
-
-    /* ===== HUD ===== */
-    #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-    #scoreboard { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 0;
-      background: rgba(5,15,8,.78); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; overflow: hidden;
-      box-shadow: 0 8px 30px rgba(0,0,0,.45); font-weight: 800; }
-    .sb-team { padding: 9px 16px; font-size: 17px; letter-spacing: 2px; }
-    .sb-team.red { background: linear-gradient(180deg,#e5484d,#b02226); }
-    .sb-team.blue { background: linear-gradient(180deg,#3b82f6,#1d4ed8); }
-    .sb-score { padding: 9px 14px; font-size: 22px; min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
-    #clock { padding: 9px 16px; font-size: 20px; background: rgba(255,255,255,.08); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
-    #diffTag { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #cfe8d4;
-      background: rgba(5,15,8,.6); padding: 3px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); letter-spacing: 3px; }
-
-    #staminaWrap { position: absolute; left: 22px; bottom: 22px; width: 190px; }
-    #staminaWrap .lbl { font-size: 12px; color: #cde8d2; letter-spacing: 3px; margin-bottom: 5px; text-shadow: 0 1px 4px #000; }
-    .bar { height: 12px; border-radius: 999px; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.25); overflow: hidden; }
-    #staminaBar { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(90deg,#ffe066,#6fe888); transition: width .1s linear; }
-    #staminaBar.tired { background: linear-gradient(90deg,#ff5d5d,#ff9d5d); }
-
-    #powerWrap { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); width: 260px; }
-    #powerWrap .lbl { text-align: center; font-size: 13px; color: #ffd9a8; letter-spacing: 4px; margin-bottom: 5px; text-shadow: 0 1px 4px #000; }
-    #powerBar { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg,#ffd166,#ff6b35,#ff2d55); }
-
-    #minimap { position: absolute; right: 20px; bottom: 20px; width: 216px; height: 148px; border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.22); background: rgba(4,20,8,.75); box-shadow: 0 8px 26px rgba(0,0,0,.5); }
-
-    #hintBar { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,.55);
-      letter-spacing: 1px; white-space: nowrap; }
-
-    .icon-btn { pointer-events: auto; position: absolute; top: 16px; width: 42px; height: 42px; border-radius: 12px; cursor: pointer;
-      background: rgba(5,15,8,.72); border: 1px solid rgba(255,255,255,.16); color: #fff; font-size: 19px;
-      display: flex; align-items: center; justify-content: center; transition: background .15s; }
-    .icon-btn:hover { background: rgba(40,80,50,.85); }
-    #muteBtn { right: 16px; }
-    #pauseBtn { right: 68px; }
-
-    /* ===== 中央横幅 ===== */
-    #banner { position: fixed; top: 34%; left: 0; right: 0; text-align: center; z-index: 15; pointer-events: none;
-      font-size: 90px; font-weight: 900; letter-spacing: 14px; color: #fff;
-      text-shadow: 0 0 26px rgba(255,220,80,.9), 0 6px 18px rgba(0,0,0,.6); opacity: 0; transform: scale(.6); }
-    #banner.show { animation: bannerPop .55s cubic-bezier(.2,1.6,.4,1) forwards; }
-    #banner.subtle { font-size: 56px; letter-spacing: 8px; }
-    @keyframes bannerPop { to { opacity: 1; transform: scale(1); } }
-
-    /* ===== 结算 / 暂停 ===== */
-    #endScreen, #pauseMenu { background: rgba(3,10,5,.82); backdrop-filter: blur(4px); z-index: 30; }
-    .end-panel { text-align: center; }
-    #endTitle { font-size: 64px; font-weight: 900; letter-spacing: 10px; margin-bottom: 14px; }
-    #endTitle.win { color: #7dff96; text-shadow: 0 0 40px rgba(90,255,130,.6); }
-    #endTitle.lose { color: #ff7d7d; text-shadow: 0 0 40px rgba(255,90,90,.5); }
-    #endScore { font-size: 30px; color: #e8f4ea; margin-bottom: 8px; font-weight: 700; letter-spacing: 3px; }
-    #endSub { color: #a8c8ae; margin-bottom: 34px; font-size: 15px; letter-spacing: 2px; }
-    .end-panel .row { display: flex; gap: 14px; justify-content: center; }
-    .big-btn { cursor: pointer; font-size: 17px; font-weight: 700; letter-spacing: 3px; padding: 13px 36px; border-radius: 999px;
-      border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; transition: all .15s; }
-    .big-btn:hover { background: rgba(255,255,255,.18); transform: translateY(-2px); }
-    .big-btn.primary { background: linear-gradient(180deg,#8dff9f,#34c95b); color: #06220c; border-color: transparent; }
-
-    #loadTip { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50;
-      background: #071408; color: #9fd8a8; font-size: 18px; letter-spacing: 6px; }
-  </style>
+  <title>热血绿茵 · Blazing Pitch</title>
+  <meta name="description" content="街机风格 5v5 3D 足球：热血必杀射门、杯赛生涯、本地多人对战。" />
 </head>
 <body>
   <div id="app"></div>
-  <div id="loadTip">球场准备中⋯⋯</div>
+  <div id="loadTip"><div class="ld-logo">热血绿茵</div><div class="ld-t">球场准备中……</div></div>
 
-  <!-- 主菜单 -->
-  <div id="menu" class="overlay hidden">
-    <div class="panel">
-      <h1>⚽ 热血绿茵</h1>
-      <div class="tag">3D 实时足球 · 4 v 4 · 由 Three.js 驱动</div>
-
-      <div class="section-label">— 选择电脑难度 —</div>
-      <div class="diff-grid" id="diffGrid">
-        <div class="diff-btn" data-diff="easy"><div class="emoji">🙂</div><div class="name">简单</div><div class="desc">对手慢半拍<br>轻松虐菜</div></div>
-        <div class="diff-btn active" data-diff="normal"><div class="emoji">😎</div><div class="name">普通</div><div class="desc">势均力敌<br>正常发挥</div></div>
-        <div class="diff-btn" data-diff="hard"><div class="emoji">🔥</div><div class="name">困难</div><div class="desc">逼抢凶狠<br>门将神扑</div></div>
-        <div class="diff-btn" data-diff="legend"><div class="emoji">👹</div><div class="name">传奇</div><div class="desc">全员挂科技<br>敢来吗？</div></div>
-      </div>
-
-      <div class="section-label">— 比赛时长 —</div>
-      <div class="dur-row" id="durRow">
-        <button class="dur-btn" data-dur="120">2 分钟</button>
-        <button class="dur-btn active" data-dur="180">3 分钟</button>
-        <button class="dur-btn" data-dur="300">5 分钟</button>
-      </div>
-
-      <button id="startBtn">开始比赛</button>
-
-      <div class="controls-hint">
-        <span><b>W A S D</b>移动</span>
-        <span><b>Shift</b>冲刺</span>
-        <span><b>空格</b>蓄力射门</span>
-        <span><b>E</b>传球</span>
-        <span><b>Q</b>换人</span>
-        <span><b>Esc</b>暂停</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- HUD -->
+  <!-- 比赛 HUD -->
   <div id="hud" class="hidden">
     <div id="scoreboard">
-      <div class="sb-team red">红队</div>
-      <div class="sb-score" id="scoreA">0</div>
-      <div id="clock">3:00</div>
-      <div class="sb-score" id="scoreB">0</div>
-      <div class="sb-team blue">蓝队</div>
+      <div class="sb-row">
+        <div class="sb-team" id="sbA">A</div>
+        <div class="sb-score" id="scA">0</div>
+        <div class="sb-sep">-</div>
+        <div class="sb-score" id="scB">0</div>
+        <div class="sb-team" id="sbB">B</div>
+        <div id="clock">0'</div>
+      </div>
+      <div class="fever-row">
+        <div class="fever l"><i id="feverA"></i></div>
+        <div class="fever-l">🔥</div>
+        <div class="fever r"><i id="feverB"></i></div>
+      </div>
     </div>
-    <div id="diffTag">难度 · 普通</div>
-
-    <div id="staminaWrap">
-      <div class="lbl">体力</div>
-      <div class="bar"><div id="staminaBar"></div></div>
-    </div>
-
-    <div id="powerWrap" class="hidden">
-      <div class="lbl">射门力度</div>
-      <div class="bar"><div id="powerBar"></div></div>
-    </div>
-
-    <canvas id="minimap" width="216" height="148"></canvas>
-    <div id="hintBar">WASD 移动 · Shift 冲刺 · 空格 蓄力射门 · E 传球 · Q 换人</div>
-
-    <div class="icon-btn" id="pauseBtn" title="暂停">⏸</div>
-    <div class="icon-btn" id="muteBtn" title="静音">🔊</div>
+    <div id="tags"></div>
+    <div id="radarWrap"><canvas id="radar" width="220" height="142"></canvas></div>
+    <div id="commentary"></div>
+    <div id="spHint" class="hidden"></div>
+    <div id="replayTag" class="hidden"><span class="rec"></span>回放 · 按键跳过</div>
+    <div id="shootoutBox" class="hidden"></div>
+    <div id="vsCard" class="hidden"></div>
   </div>
-
   <div id="banner"></div>
+  <div id="flashes"></div>
+  <div id="fader"></div>
+  <div id="toasts"></div>
 
-  <!-- 结算 -->
-  <div id="endScreen" class="overlay hidden">
-    <div class="end-panel">
-      <div id="endTitle">胜利！</div>
-      <div id="endScore">红队 0 : 0 蓝队</div>
-      <div id="endSub"></div>
-      <div class="row">
-        <button class="big-btn primary" id="rematchBtn">再来一局</button>
-        <button class="big-btn" id="backMenuBtn">更换难度</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 暂停 -->
-  <div id="pauseMenu" class="overlay hidden">
-    <div class="end-panel">
-      <div id="endTitlePause" style="font-size:46px;font-weight:900;letter-spacing:10px;margin-bottom:30px;">比赛暂停</div>
-      <div class="row">
-        <button class="big-btn primary" id="resumeBtn">继续比赛</button>
-        <button class="big-btn" id="quitBtn">返回菜单</button>
-      </div>
-    </div>
-  </div>
+  <div id="screen" class="hidden"></div>
+  <div id="overlay" class="hidden"></div>
 
   <script type="module" src="/src/main.js"></script>
 </body>

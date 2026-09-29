@@ -1,0 +1,33 @@
+{
+  "name": "blazing-pitch-desktop",
+  "productName": "Blazing Pitch",
+  "version": "2.0.0",
+  "description": "热血绿茵 · Blazing Pitch —— Steam 桌面版外壳",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "prepare-web": "cd .. && npm run build && node -e \"require('fs').cpSync('dist','desktop/app',{recursive:true})\"",
+    "start": "npm run prepare-web && electron .",
+    "dist:win": "npm run prepare-web && electron-builder --win dir",
+    "dist:mac": "npm run prepare-web && electron-builder --mac dir",
+    "dist:linux": "npm run prepare-web && electron-builder --linux dir"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "optionalDependencies": {
+    "steamworks.js": "^0.4.0"
+  },
+  "build": {
+    "appId": "com.blazingpitch.game",
+    "productName": "Blazing Pitch",
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "preload.cjs", "app/**/*"],
+    "extraFiles": [{ "from": "steam_appid.txt", "to": "steam_appid.txt" }],
+    "win": { "target": "dir" },
+    "mac": { "target": "dir", "category": "public.app-category.sports-games" },
+    "linux": { "target": "dir", "category": "Game" },
+    "asarUnpack": ["node_modules/steamworks.js/**/*"]
+  }
+}
