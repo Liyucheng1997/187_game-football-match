@@ -321,7 +321,7 @@ export class UI {
         html: () => {
           const c = S.club, t = clubTeam(c);
           const up = (k, n) => {
-            const lv = c.upgrades[k], cost = 150 * (lv + 1);
+            const lv = c.upgrades[k], cost = 90 * (lv + 1);
             const max = lv >= 10;
             return `<div class="uprow"><span>${n}</span><div class="lv">${Array.from({ length: 10 }, (_, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</div>
               <button class="btn sm ${max || S.coins < cost ? 'dim' : ''}" data-nav data-up="${k}">${max ? '已满级' : `升级 🪙${cost}`}</button></div>`;
@@ -363,7 +363,7 @@ export class UI {
           ab.onchange = () => { S.club.abbr = (ab.value.trim() || 'FCM').toUpperCase().slice(0, 3); self.save.write(); self.render(true); };
           nm.onclick = ab.onclick = e => e.target.focus();
           r.querySelectorAll('[data-up]').forEach(e => e.onclick = () => {
-            const k = e.dataset.up, lv = S.club.upgrades[k], cost = 150 * (lv + 1);
+            const k = e.dataset.up, lv = S.club.upgrades[k], cost = 90 * (lv + 1);
             if (lv >= 10 || S.coins < cost) { self.audio.back(); return; }
             S.coins -= cost; S.club.upgrades[k]++;
             self.audio.coin();

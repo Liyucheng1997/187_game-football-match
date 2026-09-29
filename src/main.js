@@ -82,7 +82,7 @@ class Showcase {
     const key = teams.map(t => t.id + JSON.stringify(t.kit)).join('|');
     if (key === this.key) return;
     this.key = key;
-    for (const m of this.models) this.group.remove(m.root);
+    for (const m of this.models) m.dispose();
     this.models = [];
     teams.forEach((t, ti) => {
       for (let i = 0; i < 5; i++) {
@@ -164,7 +164,7 @@ const app = {
     } else {
       showcase.set([name === 'title' ? TEAMS[0] : club]);
       cam.special = name === 'title' ? { type: 'menu', r: 24, h: 7, a0: 1.2 }
-        : name === 'club' ? { type: 'menu', r: 8, h: 1.9, a0: Math.PI / 2, orbit: false, shift: -2.6, ly: 1.1 }
+        : name === 'club' ? { type: 'menu', r: 8.5, h: 1.9, a0: Math.PI / 2 + 0.2, orbit: false, shift: 4.6, ly: 1.1 }
         : { type: 'menu', r: 9, h: 2.2, a0: Math.PI / 2 - 0.15, orbit: false, shift: 3.4, ly: 1.2 };
     }
   },
@@ -182,6 +182,11 @@ const app = {
     weather.set(cfg.weather);
     match.onEnd = res => this.onMatchEnd(res);
     match.setup(cfg);
+    if (!save.data.tutorialSeen && cfg.humans.length && !params.has('autotest')) {
+      save.data.tutorialSeen = true; save.write();
+      this.paused = true;
+      ui.controlsOverlay(() => { this.paused = false; });
+    }
     bloom.strength = stadium.bloom;
     renderer.toneMappingExposure = stadium.exposure;
   },

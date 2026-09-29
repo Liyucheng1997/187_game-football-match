@@ -622,7 +622,7 @@ export class Stadium {
     let sunI = P.sunI, hemiI = P.hemiI;
     if (weather !== 'clear') {
       top.lerp(grey, 0.75); hor.lerp(grey, 0.7); fog.lerp(grey, 0.6);
-      if (time !== 'night') { sunI *= weather === 'snow' ? 0.55 : 0.4; hemiI *= 1.25; }
+      if (time !== 'night') { sunI *= weather === 'snow' ? 0.6 : 0.55; hemiI *= 1.6; P.exp += 0.1; }
       P.fogN *= 0.6; P.fogF *= 0.55;
     }
     this.skyMat.uniforms.top.value.copy(top);

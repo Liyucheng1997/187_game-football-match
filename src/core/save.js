@@ -28,7 +28,7 @@ const DEFAULT = () => ({
   coins: 200,
   settings: {
     master: 0.8, music: 0.5, sfx: 0.9, crowd: 0.8,
-    quality: 'high', camera: 'broadcast', replays: true, autoSwitch: true, commentary: true, duration: 240, shake: true,
+    quality: 'medium', camera: 'broadcast', replays: true, autoSwitch: true, commentary: true, duration: 240, shake: true,
   },
   club: {
     name: '我的俱乐部', abbr: 'FCM',

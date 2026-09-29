@@ -162,18 +162,16 @@ export class HumanController {
   // 自动换人：失球或松球时切到最合适的人
   autoSwitch() {
     const m = this.m, p = this.player;
-    if (!m.settings.autoSwitch || this.switchLock > 0 || this.charge >= 0) return;
     const ball = m.ball;
+    // 门将分球后必须切回场上球员
+    if (p && p.isGK && ball.heldBy !== p && this.switchLock <= 0) { this.manualSwitch(null); return; }
+    if (!m.settings.autoSwitch || this.switchLock > 0 || this.charge >= 0) return;
     if (ball.owner && ball.owner.team === this.team) {
       if (ball.owner !== p && !ball.owner.controller && !ball.owner.isGK) this.setPlayer(ball.owner);
       return;
     }
     if (ball.heldBy) {
       if (ball.heldBy.team === this.team && !ball.heldBy.controller) this.setPlayer(ball.heldBy);
-      return;
-    }
-    if (p && p.isGK && !ball.heldBy) {
-      this.manualSwitch(null);
       return;
     }
     const exp = m.expected;

@@ -210,6 +210,13 @@ export class PlayerModel {
 
   setKitMap(tex) { this.shirtMat.map = tex; this.shirtMat.needsUpdate = true; }
 
+  // 释放本模型独占的资源（球衣纹理与材质；几何体与其他材质共享，不释放）
+  dispose() {
+    if (this.shirtMat.map) this.shirtMat.map.dispose();
+    this.shirtMat.dispose();
+    this.root.removeFromParent();
+  }
+
   // 右脚 / 手 的世界坐标
   worldOf(obj, out, y = 0) { return obj.localToWorld(out.set(0, y, 0)); }
 }

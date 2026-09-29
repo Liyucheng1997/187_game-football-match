@@ -126,8 +126,8 @@ export class Match {
 
   clear() {
     this.showBall(false);
-    for (const p of this.players) this.scene.remove(p.model.root);
-    for (const r of this.rings) this.scene.remove(r.ring);
+    for (const p of this.players) p.model.dispose();
+    for (const r of this.rings) { this.scene.remove(r.ring); r.ring.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } }); }
     this.players = []; this.teams = []; this.humans = []; this.rings = [];
     this.ball.reset(0, 0);
     this.fx.hideArrow();
@@ -238,7 +238,10 @@ export class Match {
     this.checkGoalOrOut();
     this.fever(dt);
 
-    // 氛围
+    // 氛围：平静时偶尔来一波人浪
+    this.waveT = (this.waveT ?? 25 + Math.random() * 20) - dt;
+    if (this.waveT <= 0) { this.waveT = 45 + Math.random() * 40; this.stadium.wave = 1; this.waveOff = 9; }
+    if (this.waveOff > 0 && (this.waveOff -= dt) <= 0) this.stadium.wave = 0;
     const danger = Math.max(0, 1 - Math.abs(Math.abs(ball.pos.x) - F.hl) / 25);
     this.audio.setExcitement(Math.min(1, danger * 0.9 + (ball.kickMeta?.shot && ball.kickTime < 1.5 ? 0.4 : 0)));
     this.focusPlayer = this.humans[0]?.player || null;

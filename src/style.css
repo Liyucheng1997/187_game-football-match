@@ -227,7 +227,7 @@ button { font-family: inherit; color: inherit; }
 .next-opp { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 24px; font-size: 18px; }
 .next-opp span { color: var(--dim); font-size: 14px; }
 
-.club-wrap { display: grid; grid-template-columns: 360px 1fr; gap: 30px; max-width: 1200px; }
+.club-wrap { display: grid; grid-template-columns: 340px 1fr; gap: 24px; max-width: 900px; }
 .club-l, .club-r { background: rgba(8,14,12,.8); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .club-crest { display: flex; justify-content: center; margin-bottom: 6px; }
 .field { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 14px; }
