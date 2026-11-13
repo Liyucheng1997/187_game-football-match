@@ -15,6 +15,9 @@ import { Weather } from './gfx/particles.js';
 import { PlayerModel, J, NJ } from './gfx/player-model.js';
 import { makeBallMaterial } from './game/ball.js';
 import { Match } from './game/match.js';
+import { Arena } from './sports/arena.js';
+import { RacketMatch } from './sports/racket.js';
+import { BasketballMatch } from './sports/basketball.js';
 import { CameraRig } from './game/camera.js';
 import { HUD } from './ui/hud.js';
 import { UI } from './ui/menus.js';
@@ -66,6 +69,10 @@ const cam = new CameraRig(camera);
 const hud = new HUD(camera);
 const match = new Match({ scene, stadium, audio, input, hud, fx, cam, save });
 match.showBall(false);
+const arena = new Arena(scene, stadium, quality);
+const sportCtx = { scene, stadium, arena, audio, input, hud, fx, cam, save };
+const racket = new RacketMatch(sportCtx);
+const sports = { basketball: new BasketballMatch(sportCtx), tennis: racket, badminton: racket };
 
 // ================= 菜单展示：球员阵容 + 颠球 =================
 class Showcase {
@@ -78,17 +85,17 @@ class Showcase {
     this.group.add(this.ball);
     this.key = '';
   }
-  set(teams) {
-    const key = teams.map(t => t.id + JSON.stringify(t.kit)).join('|');
+  set(teams, sport = 'football') {
+    const key = sport + teams.map(t => t.id + JSON.stringify(t.kit)).join('|');
     if (key === this.key) return;
     this.key = key;
     for (const m of this.models) m.dispose();
     this.models = [];
     teams.forEach((t, ti) => {
       for (let i = 0; i < 5; i++) {
-        const isGK = i === 0;
+        const isGK = i === 0 && sport === 'football';
         const kit = isGK ? { primary: '#f5b700', secondary: '#1a1a1a', pattern: 'solid', shorts: '#1a1a1a', socks: '#f5b700' } : t.kit;
-        const m = new PlayerModel({ kit, number: [1, 4, 7, 8, 9][i], name: t.players[i], isKeeper: isGK, seed: hashStr(t.id + i + t.players[i]) });
+        const m = new PlayerModel({ kit, number: [1, 4, 7, 8, 9][i], name: t.players[i], isKeeper: isGK, seed: hashStr(t.id + i + t.players[i]), sport });
         const n = teams.length;
         const order = [4, 2, 0, 1, 3][i];
         const off = (order - 2) * 1.35;
@@ -101,7 +108,7 @@ class Showcase {
         this.models.push(m);
       }
     });
-    this.ball.visible = teams.length === 1;
+    this.ball.visible = teams.length === 1 && sport === 'football';
     const ballDesign = BALLS.find(b => b.id === save.data.ball) || BALLS[0];
     const u = this.ball.material.userData.uniforms;
     u.uPent.value.set(ballDesign.pent); u.uHex.value.set(ballDesign.hex); u.uSeam.value.set(ballDesign.seam);
@@ -115,7 +122,8 @@ class Showcase {
       s(J.lSh, 0.05, 0, 0.12); s(J.rSh, 0.05, 0, -0.12); s(J.lEl, -0.2); s(J.rEl, -0.2);
       s(J.lHip, -0.02, 0.12, 0.08); s(J.rHip, -0.02, -0.12, -0.08); s(J.lKnee, 0.06); s(J.rKnee, 0.06);
       if (!m.juggler && Math.sin(t * 0.3 + m.phase * 3) > 0.7) { s(J.lSh, -0.3, 0, 0.4); s(J.lEl, -2.2); s(J.rSh, -0.3, 0, -0.4); s(J.rEl, -2.2); }
-      if (m.juggler) {
+      if (m.racket) { s(J.rSh, -0.6, 0, -0.2); s(J.rEl, -1.3 + Math.sin(t * 1.4 + m.phase) * 0.15); }
+      if (m.juggler && this.ball.visible) {
         const ph = t * 4.2;
         const up = Math.max(0, Math.cos(ph));
         const foot = Math.floor(ph / (Math.PI * 2)) % 2;
@@ -140,6 +148,7 @@ scene.add(menuLight);
 // ================= 应用 =================
 const app = {
   input, save, audio, match,
+  game: match,
   inMatch: false,
   paused: false,
 
@@ -156,10 +165,10 @@ const app = {
     if (this.inMatch) return;
     audio.music(true);
     const club = clubTeam(save.data.club);
-    if (name === 'quick' || name === 'controllers') {
+    if (name === 'quick' || name === 'controllers' || name === 'sport') {
       const T = [club, ...TEAMS];
       const q = ui.q;
-      showcase.set(q.mode === 'cup' && ui.cupTeams ? [ui.cupTeams.a, ui.cupTeams.b] : [T[q.a], T[q.b]]);
+      showcase.set(q.mode === 'cup' && ui.cupTeams ? [ui.cupTeams.a, ui.cupTeams.b] : [T[q.a], T[q.b]], q.mode === 'sport' ? q.sport : 'football');
       cam.special = { type: 'menu', r: 14, h: 2.6, a0: Math.PI / 2, orbit: false, ly: 3.2 };
     } else {
       showcase.set([name === 'title' ? TEAMS[0] : club]);
@@ -179,13 +188,16 @@ const app = {
     hud.show(true);
     this.inMatch = true;
     this.paused = false;
-    weather.set(cfg.weather);
-    match.onEnd = res => this.onMatchEnd(res);
-    match.setup(cfg);
-    if (!save.data.tutorialSeen && cfg.humans.length && !params.has('autotest')) {
-      save.data.tutorialSeen = true; save.write();
+    weather.set(cfg.sport ? 'clear' : cfg.weather);
+    const g = this.game = cfg.sport ? sports[cfg.sport] : match;
+    g.onEnd = res => (cfg.sport ? this.onSportEnd(res) : this.onMatchEnd(res));
+    g.setup(cfg);
+    const seen = cfg.sport ? save.data.tutorialSport[cfg.sport] : save.data.tutorialSeen;
+    if (!seen && cfg.humans.length && !params.has('autotest')) {
+      if (cfg.sport) save.data.tutorialSport[cfg.sport] = true; else save.data.tutorialSeen = true;
+      save.write();
       this.paused = true;
-      ui.controlsOverlay(() => { this.paused = false; });
+      ui.controlsOverlay(() => { this.paused = false; }, cfg.sport);
     }
     bloom.strength = stadium.bloom;
     renderer.toneMappingExposure = stadium.exposure;
@@ -205,7 +217,9 @@ const app = {
   toMenu(screen = 'main') {
     this.inMatch = false;
     this.paused = false;
+    if (this.game !== match) this.game.clear();
     match.clear();
+    this.game = match;
     hud.show(false);
     weather.set('clear');
     stadium.setPreset('night', 'clear');
@@ -219,9 +233,36 @@ const app = {
   },
 
   togglePause() {
-    if (!this.inMatch || match.state === 'done') return;
+    if (!this.inMatch || this.game.state === 'done') return;
     this.paused = !this.paused;
     if (this.paused) ui.pauseMenu(); else ui.closeOverlay();
+  },
+
+  // 篮球 / 网球 / 羽毛球结算
+  onSportEnd(res) {
+    const S = save.data, cfg = res.cfg, sp = res.sport;
+    const humanTeams = res.teams.map((t, i) => (t.human ? i : -1)).filter(i => i >= 0);
+    const extra = { coins: 0, msg: '', buttons: [] };
+    if (humanTeams.length === 1) {
+      const h = humanTeams[0], won = res.winner === h;
+      const st = S.sportStats[sp];
+      if (won) st.w++; else st.l++;
+      const mult = { easy: 1, normal: 1.5, hard: 2.2, legend: 3.2 }[cfg.diff] || 1;
+      extra.coins = Math.round((won ? 50 : 10) * mult);
+      if (won) {
+        save.unlock({ basketball: 'bb_win', tennis: 'tn_win', badminton: 'bd_win' }[sp]);
+        if (sp === 'basketball' && res.dunks[h] >= 3) save.unlock('bb_dunk');
+        if (sp === 'tennis' && res.aces[h] >= 2) save.unlock('tn_ace');
+        if (sp === 'badminton' && res.maxRally >= 15) save.unlock('bd_rally');
+        if (S.stats.wins > 0 && S.sportStats.basketball.w && S.sportStats.tennis.w && S.sportStats.badminton.w) save.unlock('all_round');
+      }
+    } else if (humanTeams.length === 2) extra.coins = 20;
+    extra.buttons.push({ label: '再来一局', fn: () => this.startMatch(this.lastCfg) });
+    extra.buttons.push({ label: '主菜单', fn: () => this.toMenu('main') });
+    S.coins += extra.coins;
+    save.write();
+    if (extra.coins) audio.coin();
+    ui.showSportResult(res, extra);
   },
 
   onMatchEnd(res) {
@@ -257,6 +298,7 @@ const app = {
       if (won && res.shootout) save.unlock('shootout');
       if (S.stats.tackles >= 50) save.unlock('tackles');
       if (S.stats.matches >= 25) save.unlock('veteran');
+      if (won && S.sportStats.basketball.w && S.sportStats.tennis.w && S.sportStats.badminton.w) save.unlock('all_round');
     } else if (humanTeams.length === 2) extra.coins = 20;
 
     if (cfg.mode === 'cup') {
@@ -312,7 +354,7 @@ function frame(dt) {
   input.poll(t);
   if (app.inMatch) {
     if (!app.paused) {
-      match.update(dt);
+      app.game.update(dt);
       weather.update(dt, camera);
     } else cam.update(0, match);
   } else {
@@ -335,10 +377,12 @@ if (params.has('autotest')) {
   // 自动测试：电脑对电脑
   const T = TEAMS;
   ui.hide();
-  app.startMatch({ mode: 'quick', teamA: T[0], teamB: T[1], diff: 'hard', duration: +(params.get('dur') || 240), time: params.get('time') || 'night', weather: params.get('weather') || 'clear', cage: params.has('cage'), humans: params.has('human') ? [{ device: 'kb1', team: 0 }] : [], title: '测试赛' });
+  const sp = params.get('sport');
+  if (sp) app.startMatch({ mode: 'sport', sport: sp, teamA: T[0], teamB: T[1], diff: params.get('diff') || 'hard', duration: +(params.get('dur') || 120), length: +(params.get('len') || (sp === 'tennis' ? 2 : 7)), time: params.get('time') || 'day', humans: params.has('human') ? [{ device: 'kb1', team: 0 }] : [], title: '测试赛' });
+  else app.startMatch({ mode: 'quick', teamA: T[0], teamB: T[1], diff: 'hard', duration: +(params.get('dur') || 240), time: params.get('time') || 'night', weather: params.get('weather') || 'clear', cage: params.has('cage'), humans: params.has('human') ? [{ device: 'kb1', team: 0 }] : [], title: '测试赛' });
 } else {
   ui.reset('title');
 }
 loop();
 
-window.__game = { app, match, ui, save, step: (dt = 1 / 60) => frame(dt), renderer, scene, camera, stadium };
+window.__game = { app, match, sports, arena, ui, save, step: (dt = 1 / 60) => frame(dt), renderer, scene, camera, stadium };

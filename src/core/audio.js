@@ -111,6 +111,18 @@ export class AudioFX {
     this._tone('sine', 60, 30, 0.8, 0.5);
   }
 
+  // ---------- 篮球 / 网球 / 羽毛球 ----------
+  racket(power = 0.6, tennis = true) {
+    if (!this.ctx) return;
+    if (tennis) { this._tone('sine', 300 + power * 160, 120, 0.07, 0.3 + power * 0.4); this._noise(0.05, 'bandpass', 1500 + power * 1200, 0.25 + power * 0.3, { q: 1.2 }); }
+    else { this._tone('triangle', 900 + power * 700, 500, 0.04, 0.18 + power * 0.25); this._noise(0.035, 'highpass', 2500, 0.12 + power * 0.3); }
+    if (power > 0.9) this._noise(0.2, 'bandpass', 700, 0.2, { t0: 0.01, sweep: 0.4 });
+  }
+  swish() { if (this.ctx) { this._noise(0.28, 'bandpass', 2600, 0.32, { q: 0.7, sweep: 0.45, attack: 0.01 }); this._noise(0.12, 'highpass', 5000, 0.12, { t0: 0.05 }); } }
+  rim() { if (this.ctx) { for (const [f, g] of [[520, 0.22], [1130, 0.12], [1790, 0.07]]) this._tone('triangle', f, f * 0.98, 0.45, g); this._noise(0.05, 'lowpass', 900, 0.3); } }
+  dunk() { if (this.ctx) { this._tone('sine', 90, 35, 0.35, 0.8); this._noise(0.2, 'lowpass', 500, 0.6, { buf: this.brown }); this.rim(); this.swish(); } }
+  buzzer() { if (this.ctx) { this._tone('sawtooth', 196, 196, 0.9, 0.16, { attack: 0.01 }); this._tone('square', 247, 247, 0.9, 0.07, { attack: 0.01 }); } }
+
   whistle(kind = 'short') {
     if (!this.ctx) return;
     const blast = (t0, dur, g = 0.12) => {

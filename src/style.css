@@ -295,3 +295,44 @@ kbd { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25)
   .logo .l1 { font-size: 64px; }
   #commentary { width: 260px; }
 }
+
+/* ================= 篮球 / 网球 / 羽毛球 HUD ================= */
+#hud.sport #scoreboard, #hud.sport #radarWrap, #hud.sport #shootoutBox { display: none !important; }
+#hud.sport #spHint { white-space: normal; max-width: 92vw; text-align: center; bottom: 26px; line-height: 1.9; border-radius: 18px; }
+#spBoard { position: absolute; top: 18px; left: 22px; filter: drop-shadow(0 6px 16px rgba(0,0,0,.5)); }
+.spb { background: rgba(6, 10, 18, .88); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); }
+.spb b { font-family: var(--num); font-size: 18px; letter-spacing: 2px; padding: 0 12px; display: flex; align-items: center; justify-content: center; min-width: 66px;
+  background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 70%, #000)); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.spb em { font-style: normal; font-family: var(--num); font-size: 26px; min-width: 50px; display: flex; align-items: center; justify-content: center; }
+.spb.hoops { display: flex; align-items: stretch; height: 48px; }
+.spb.hoops .mid { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 14px; background: rgba(255,255,255,.08); min-width: 86px; }
+.spb.hoops .mid span { font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+.spb.hoops .mid strong { font-family: var(--num); font-size: 19px; }
+.spb.hoops .sc { font-style: normal; font-family: var(--num); font-size: 20px; color: #ffb347; min-width: 46px; display: flex; align-items: center; justify-content: center; background: #17100a; border-left: 1px solid rgba(255,255,255,.12); }
+.spb.hoops .sc.low { color: #ff4d4d; animation: blink .5s infinite; }
+.spb.racket { display: flex; flex-direction: column; min-width: 250px; }
+.spb-row { display: flex; align-items: stretch; height: 36px; }
+.spb-row + .spb-row { border-top: 1px solid rgba(255,255,255,.1); }
+.spb-row span { flex: 1; display: flex; align-items: center; padding: 0 12px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+.spb-row i { width: 10px; height: 10px; border-radius: 50%; align-self: center; margin-right: 8px; }
+.spb-row i.on { background: #d9f02b; box-shadow: 0 0 8px #d9f02b; }
+.spb-row em { font-size: 20px; min-width: 40px; border-left: 1px solid rgba(255,255,255,.1); }
+.spb-row em.pt { background: rgba(255,210,63,.16); color: var(--acc); }
+.spb-foot { font-size: 11px; color: var(--dim); letter-spacing: 2px; padding: 3px 12px; background: rgba(255,255,255,.06); }
+
+/* 运动选择 */
+.sport-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.tile.sport { min-height: 190px; }
+.tile.sport .ti-i { font-size: 72px; top: 12px; right: 14px; opacity: .92; }
+.tile.sport .ti-t { font-size: 28px; }
+.tile.s-foot { background: linear-gradient(135deg, rgba(30,120,60,.6), rgba(10,20,16,.82)); }
+.tile.s-bask { background: linear-gradient(135deg, rgba(200,95,20,.6), rgba(10,20,16,.82)); }
+.tile.s-tenn { background: linear-gradient(135deg, rgba(40,95,180,.6), rgba(10,20,16,.82)); }
+.tile.s-badm { background: linear-gradient(135deg, rgba(25,140,110,.6), rgba(10,20,16,.82)); }
+.main-wrap.wide { max-width: 1040px; }
+.menu-grid.three { grid-template-columns: repeat(3, 1fr); }
+.scr-sport, .scr-football { background: linear-gradient(180deg, rgba(3,8,6,.85), rgba(3,8,6,.6) 60%, rgba(3,8,6,.85)); }
+.scr-sport .btn.big { align-self: center; margin-top: 18px; }
+.sport-tip { text-align: center; color: var(--dim); font-size: 13px; margin-top: 14px; line-height: 1.8; }
+.res-note { text-align: center; color: var(--dim); font-size: 14px; margin-top: 6px; }
+@media (max-width: 900px) { .sport-grid { grid-template-columns: 1fr 1fr; } }

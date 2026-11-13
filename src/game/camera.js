@@ -81,7 +81,7 @@ export class CameraRig {
       this.set(tp, new THREE.Vector3(p.x, 1.2, p.z), Math.min(1, dt * 2.5));
       fov = 40;
     } else if (sp && sp.type === 'fixed') {
-      this.set(sp.pos, sp.look, sp.snap ? 1 : Math.min(1, dt * 3));
+      this.set(sp.pos, sp.look, sp.snap ? 1 : Math.min(1, dt * (sp.k || 3)));
       fov = sp.fov || fov;
     } else if (sp && sp.type === 'setpiece') {
       const b = m.ball.pos;

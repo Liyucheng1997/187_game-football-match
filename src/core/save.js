@@ -21,6 +21,13 @@ export const ACHIEVEMENTS = [
   { id: 'cup_legend', name: '绿茵传奇', desc: '赢得传奇杯', icon: '👑' },
   { id: 'max_club', name: '豪门崛起', desc: '俱乐部所有属性升到满级', icon: '🏟️' },
   { id: 'veteran', name: '身经百战', desc: '累计完成 25 场比赛', icon: '📅' },
+  { id: 'bb_win', name: '篮下霸主', desc: '赢得一场篮球比赛', icon: '🏀' },
+  { id: 'bb_dunk', name: '飞人', desc: '单场篮球比赛完成 3 次扣篮', icon: '🛫' },
+  { id: 'tn_win', name: '网坛新星', desc: '赢得一场网球比赛', icon: '🎾' },
+  { id: 'tn_ace', name: 'ACE 球手', desc: '单场网球比赛发出 2 记 ACE', icon: '⚡' },
+  { id: 'bd_win', name: '羽坛新秀', desc: '赢得一场羽毛球比赛', icon: '🏸' },
+  { id: 'bd_rally', name: '多拍大战', desc: '羽毛球单回合相持达到 15 拍并赢下比赛', icon: '🔁' },
+  { id: 'all_round', name: '四项全能', desc: '在足球、篮球、网球、羽毛球中各赢一场', icon: '🌟' },
 ];
 
 const DEFAULT = () => ({
@@ -42,6 +49,8 @@ const DEFAULT = () => ({
   cupProgress: null,
   achievements: {},
   stats: { matches: 0, wins: 0, draws: 0, losses: 0, goals: 0, conceded: 0, tackles: 0, superGoals: 0 },
+  sportStats: { basketball: { w: 0, l: 0 }, tennis: { w: 0, l: 0 }, badminton: { w: 0, l: 0 } },
+  tutorialSport: {},
 });
 
 export class Save {

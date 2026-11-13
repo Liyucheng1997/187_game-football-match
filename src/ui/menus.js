@@ -14,6 +14,19 @@ const DIFF_KEYS = ['easy', 'normal', 'hard', 'legend'];
 const QUAL = [['low', '低'], ['medium', '中'], ['high', '高']];
 const CAMS = [['broadcast', '转播'], ['close', '近景'], ['wide', '高空']];
 
+// 新增运动
+export const SPORTS = {
+  basketball: { name: '篮球', icon: '🏀', cls: 's-bask', sub: '3v3 全场 · 扣篮 / 三分 / 盖帽', lens: [[120, '2 分钟'], [180, '3 分钟'], [240, '4 分钟'], [360, '6 分钟']], lenLabel: '比赛时长', def: 180,
+    tip: '按住 K 投篮，在绿色区间松手命中率最高 · 冲刺中靠近篮筐按 K 直接扣篮 · 防守时 K 起跳封盖、J 抢断',
+    help: [['移动 / 冲刺', 'W A S D / Shift', '方向键 / 右 Shift', '左摇杆 / RT'], ['传球 · 防守时抢断', 'J', ', / 小键盘1', 'A'], ['投篮(按住) / 上篮 / 扣篮 · 防守时封盖', 'K', '. / 小键盘2', 'B'], ['高吊传球', 'I', '; / 小键盘5', 'X'], ['传给篮下队友', 'L', '/ / 小键盘3', 'Y'], ['变向过人', '空格', "' / 小键盘6", 'RB'], ['切换防守球员', 'Q', 'M / 小键盘4', 'LB']] },
+  tennis: { name: '网球', icon: '🎾', cls: 's-tenn', sub: '单打 · 发球 ACE / 上网截击 / 放小球', lens: [[2, '抢 2 局'], [3, '抢 3 局'], [4, '抢 4 局'], [6, '抢 6 局']], lenLabel: '赛制', def: 3,
+    tip: '跑到黄色落点圈附近，球快到时按键挥拍 · 稍微提前按键＝蓄势更有力 · 击球瞬间按住方向决定落点',
+    help: [['移动', 'W A S D', '方向键', '左摇杆'], ['平击', 'J', ', / 小键盘1', 'A'], ['重击 / 扣杀', 'K', '. / 小键盘2', 'B'], ['高吊球', 'I', '; / 小键盘5', 'X'], ['放小球', 'L', '/ / 小键盘3', 'Y'], ['发球', '按住 J/K 蓄力后松开', '同左', '按住 A/B']] },
+  badminton: { name: '羽毛球', icon: '🏸', cls: 's-badm', sub: '单打 · 跳杀 / 高远球 / 网前吊球', lens: [[7, '7 分'], [11, '11 分'], [15, '15 分'], [21, '21 分']], lenLabel: '赛制', def: 11,
+    tip: '羽毛球不能落地！跑到落点圈下方击球 · 球在高处按 K 起跳杀球 · 用高远球把对手压到底线再吊网前',
+    help: [['移动', 'W A S D', '方向键', '左摇杆'], ['平抽', 'J', ', / 小键盘1', 'A'], ['杀球（球高时）', 'K', '. / 小键盘2', 'B'], ['高远球', 'I', '; / 小键盘5', 'X'], ['网前吊球', 'L', '/ / 小键盘3', 'Y'], ['发球', '按住 J（短球）/ I（高球）后松开', '同左', '按住 A / X']] },
+};
+
 export function crest(team, size = 64) {
   const k = team.kit;
   return `<div class="crest-shield" style="--p:${k.primary};--s:${k.secondary};width:${size}px;height:${size * 1.15}px"><span>${team.abbr}</span></div>`;
@@ -24,8 +37,10 @@ function stars(r) {
   for (let i = 1; i <= 5; i++) h += `<i class="${s >= i ? 'f' : s >= i - 0.5 ? 'h' : ''}">★</i>`;
   return `<div class="stars">${h}</div>`;
 }
-function bars(r) {
+function bars(r, sport = null) {
   const row = (k, n) => `<div class="rb"><span>${n}</span><div><i style="width:${r[k]}%"></i></div><b>${Math.round(r[k])}</b></div>`;
+  if (sport === 'basketball') return `<div class="rbars">${row('att', '投篮')}${row('pas', '传球')}${row('def', '防守')}${row('spd', '速度')}</div>`;
+  if (sport) return `<div class="rbars">${row('att', '力量')}${row('pas', '控球')}${row('spd', '移动')}</div>`;
   return `<div class="rbars">${row('att', '进攻')}${row('pas', '传控')}${row('def', '防守')}${row('spd', '速度')}${row('gk', '门将')}</div>`;
 }
 const lr = (id, label, value) => `<div class="opt" data-nav data-lr="${id}"><span class="ol">${label}</span><span class="ov"><b class="arr">◀</b><em>${value}</em><b class="arr">▶</b></span></div>`;
@@ -38,7 +53,7 @@ export class UI {
     this.root = $('screen');
     this.stack = [];
     this.focus = null;
-    this.q = { a: 0, b: 2, diff: 'normal', dur: this.save.s.duration, time: 'night', weather: 'clear', cage: false, mode: 'quick' };
+    this.q = { a: 0, b: 2, diff: 'normal', dur: this.save.s.duration, time: 'night', weather: 'clear', cage: false, mode: 'quick', sport: null, len: { basketball: 180, tennis: 3, badminton: 11 } };
     this.assign = { kb1: 0 };
     app.input.onNav((kind, dev) => this.onNav(kind, dev));
     this.root.addEventListener('mouseover', e => { const t = e.target.closest('[data-nav]'); if (t && t !== this.focus) this.setFocus(t, false); });
@@ -176,17 +191,29 @@ export class UI {
       <button class="btn wide" data-nav id="prs">重新开始</button>
       <button class="btn wide" data-nav id="pq">退出比赛</button></div>`, o => {
       o.querySelector('#pr').onclick = () => this.app.togglePause();
-      o.querySelector('#pc').onclick = () => this.controlsOverlay(() => this.pauseMenu());
+      o.querySelector('#pc').onclick = () => this.controlsOverlay(() => this.pauseMenu(), this.app.lastCfg?.sport);
       o.querySelector('#prs').onclick = () => { this.closeOverlay(); this.app.restartMatch(); };
       o.querySelector('#pq').onclick = () => this.confirm('确定退出本场比赛吗？（杯赛中将判负）', () => this.app.quitMatch());
     }, () => this.app.togglePause());
   }
 
-  controlsOverlay(onClose) {
+  controlsOverlay(onClose, sport = null) {
+    if (sport && SPORTS[sport]) return this.sportControls(sport, onClose);
     const rows = CONTROL_HELP.map(r => `<tr><td>${r[0]}</td><td><kbd>${r[1]}</kbd></td><td><kbd>${r[2]}</kbd></td><td><kbd>${r[3]}</kbd></td></tr>`).join('');
     this.overlay(`<div class="dlg controls"><div class="dlg-t">操作说明</div>
       <table class="ctab"><tr><th></th><th>键盘 1</th><th>键盘 2</th><th>手柄</th></tr>${rows}</table>
       <div class="tips">💡 按住射门键蓄力，在<b style="color:#7dff7a">绿色区间</b>松开触发「完美射门」 · 传球/射门可提前按下，来球时自动一脚出球 · 冲刺带球会把球趟远，容易被断 · 从背后铲球会吃牌 · 热血槽满后可释放必杀射门</div>
+      <button class="btn primary" data-nav data-focus id="cc">知道了</button></div>`,
+    o => { o.querySelector('#cc').onclick = () => { this.closeOverlay(); onClose && onClose(); }; },
+    () => { this.closeOverlay(); onClose && onClose(); });
+  }
+
+  sportControls(sport, onClose) {
+    const sp = SPORTS[sport];
+    const rows = sp.help.map(r => `<tr><td>${r[0]}</td><td><kbd>${r[1]}</kbd></td><td><kbd>${r[2]}</kbd></td><td><kbd>${r[3]}</kbd></td></tr>`).join('');
+    this.overlay(`<div class="dlg controls"><div class="dlg-t">${sp.icon} ${sp.name} · 操作说明</div>
+      <table class="ctab"><tr><th></th><th>键盘 1</th><th>键盘 2</th><th>手柄</th></tr>${rows}</table>
+      <div class="tips">💡 ${sp.tip}</div>
       <button class="btn primary" data-nav data-focus id="cc">知道了</button></div>`,
     o => { o.querySelector('#cc').onclick = () => { this.closeOverlay(); onClose && onClose(); }; },
     () => { this.closeOverlay(); onClose && onClose(); });
@@ -198,35 +225,82 @@ export class UI {
     const S = this.save.data;
     return {
       title: {
-        html: () => `<div class="title-wrap"><div class="logo"><span class="l1">热血绿茵</span><span class="l2">BLAZING PITCH</span></div>
-          <div class="press">按任意键开始</div><div class="ver">v2.0 · 支持键盘与手柄</div></div>`,
+        html: () => `<div class="title-wrap"><div class="logo"><span class="l1">热血球场</span><span class="l2">BLAZING SPORTS</span></div>
+          <div class="press">按任意键开始</div><div class="ver">v3.0 · 足球 / 篮球 / 网球 / 羽毛球 · 支持键盘与手柄</div></div>`,
         bind: r => { r.querySelector('.title-wrap').onclick = () => { self.audio.init(); self.audio.click(); self.go('main'); }; },
       },
 
       main: {
-        html: () => `<div class="main-wrap">
-          <div class="logo small"><span class="l1">热血绿茵</span><span class="l2">BLAZING PITCH</span></div>
-          <div class="menu-grid">
-            <button class="tile big" data-nav data-focus id="mQuick"><div class="ti-i">⚽</div><div class="ti-t">快速比赛</div><div class="ti-d">单人 / 本地多人对战 · 自选球队与场地</div></button>
-            <button class="tile big gold" data-nav id="mCup"><div class="ti-i">🏆</div><div class="ti-t">冠军杯赛</div><div class="ti-d">带领你的俱乐部征战四项杯赛</div></button>
-            <button class="tile" data-nav id="mPen"><div class="ti-i">🧤</div><div class="ti-t">点球大战</div></button>
+        html: () => `<div class="main-wrap wide">
+          <div class="logo small"><span class="l1">热血球场</span><span class="l2">BLAZING SPORTS</span></div>
+          <div class="sport-grid">
+            <button class="tile sport s-foot" data-nav data-focus id="mFoot"><div class="ti-i">⚽</div><div class="ti-t">足球</div><div class="ti-d">5v5 · 快速比赛 / 冠军杯赛 / 点球大战</div></button>
+            ${Object.entries(SPORTS).map(([k, sp]) => `<button class="tile sport ${sp.cls}" data-nav data-sport="${k}"><div class="ti-i">${sp.icon}</div><div class="ti-t">${sp.name}</div><div class="ti-d">${sp.sub}</div></button>`).join('')}
+          </div>
+          <div class="menu-grid three">
             <button class="tile" data-nav id="mClub"><div class="ti-i">🏟️</div><div class="ti-t">我的俱乐部</div></button>
             <button class="tile" data-nav id="mAch"><div class="ti-i">🎖️</div><div class="ti-t">成就</div></button>
             <button class="tile" data-nav id="mSet"><div class="ti-i">⚙️</div><div class="ti-t">设置</div></button>
           </div>
-          <div class="profile"><span>🪙 ${S.coins}</span><span>战绩 ${S.stats.wins}胜 ${S.stats.draws}平 ${S.stats.losses}负</span><span>进球 ${S.stats.goals}</span><span>成就 ${Object.keys(S.achievements).length}/${ACHIEVEMENTS.length}</span></div>
+          <div class="profile"><span>🪙 ${S.coins}</span><span>足球 ${S.stats.wins}胜 ${S.stats.draws}平 ${S.stats.losses}负</span><span>篮球 ${S.sportStats.basketball.w}胜</span><span>网球 ${S.sportStats.tennis.w}胜</span><span>羽毛球 ${S.sportStats.badminton.w}胜</span><span>成就 ${Object.keys(S.achievements).length}/${ACHIEVEMENTS.length}</span></div>
           ${window.steam || window.desktop ? '<button class="btn quit" data-nav id="mExit">退出游戏</button>' : ''}
         </div>`,
         bind: r => {
-          r.querySelector('#mQuick').onclick = () => { self.q.mode = 'quick'; self.go('quick'); };
-          r.querySelector('#mCup').onclick = () => self.go('cup');
-          r.querySelector('#mPen').onclick = () => { self.q.mode = 'shootout'; self.go('quick'); };
+          r.querySelector('#mFoot').onclick = () => self.go('football');
+          r.querySelectorAll('[data-sport]').forEach(e => e.onclick = () => { self.q.mode = 'sport'; self.q.sport = e.dataset.sport; self.go('sport'); });
           r.querySelector('#mClub').onclick = () => self.go('club');
           r.querySelector('#mAch').onclick = () => self.go('ach');
           r.querySelector('#mSet').onclick = () => self.go('settings');
           const ex = r.querySelector('#mExit'); if (ex) ex.onclick = () => self.confirm('退出游戏？', () => (window.desktop ? window.desktop.quit() : window.close()));
         },
         onBack: () => { self.reset('title'); },
+      },
+
+      football: {
+        html: () => `<div class="hdr"><h2>⚽ 足球</h2><div class="hint">Esc 返回</div></div>
+          <div class="main-wrap"><div class="menu-grid">
+            <button class="tile big" data-nav data-focus id="mQuick"><div class="ti-i">⚽</div><div class="ti-t">快速比赛</div><div class="ti-d">单人 / 本地多人对战 · 自选球队与场地</div></button>
+            <button class="tile big gold" data-nav id="mCup"><div class="ti-i">🏆</div><div class="ti-t">冠军杯赛</div><div class="ti-d">带领你的俱乐部征战四项杯赛</div></button>
+            <button class="tile" data-nav id="mPen"><div class="ti-i">🧤</div><div class="ti-t">点球大战</div></button>
+          </div></div>`,
+        bind: r => {
+          r.querySelector('#mQuick').onclick = () => { self.q.mode = 'quick'; self.q.sport = null; self.go('quick'); };
+          r.querySelector('#mCup').onclick = () => { self.q.sport = null; self.go('cup'); };
+          r.querySelector('#mPen').onclick = () => { self.q.mode = 'shootout'; self.q.sport = null; self.go('quick'); };
+        },
+      },
+
+      sport: {
+        html: () => {
+          const T = self.allTeams, q = self.q, sp = SPORTS[q.sport], solo = q.sport !== 'basketball';
+          const card = (i, side) => {
+            const t = T[i];
+            return `<div class="team-card" style="--p:${t.kit.primary}">
+              <div class="tc-side">${side}</div>
+              <div class="tc-sel" data-nav data-lr="team${side}"><b class="arr">◀</b>${crest(t, 76)}<b class="arr">▶</b></div>
+              <div class="tc-name">${solo ? t.players[t.star ?? 4] : t.name}${t.isClub ? ' <small>我的俱乐部</small>' : ''}</div>
+              ${solo ? `<div class="tc-ovr">${t.name}</div>` : ''}${stars(t.rating)}${bars(t.rating, q.sport)}</div>`;
+          };
+          return `<div class="hdr"><h2>${sp.icon} ${sp.name}</h2><div class="hint">${sp.sub} · ◀ ▶ 切换 · Esc 返回</div></div>
+          <div class="teams-row">${card(q.a, '主队')}<div class="vs-big">VS</div>${card(q.b, '客队')}</div>
+          <div class="opts">
+            ${lr('diff', '电脑难度', DIFFS[q.diff].label)}
+            ${lr('len', sp.lenLabel, sp.lens.find(d => d[0] === q.len[q.sport])?.[1] || q.len[q.sport])}
+            ${q.sport === 'tennis' ? lr('time', '比赛时间', TIMES.find(d => d[0] === q.time)[1]) : ''}
+          </div>
+          <div class="sport-tip">💡 ${sp.tip}</div>
+          <button class="btn primary big" data-nav data-focus id="qGo">下一步：选择控制器 ▶</button>`;
+        },
+        lr: (id, d) => {
+          const q = self.q, n = self.allTeams.length, sp = SPORTS[q.sport];
+          if (id === 'team主队') { q.a = (q.a + d + n) % n; if (q.a === q.b) q.a = (q.a + d + n) % n; }
+          if (id === 'team客队') { q.b = (q.b + d + n) % n; if (q.a === q.b) q.b = (q.b + d + n) % n; }
+          if (id === 'diff') q.diff = cyc(DIFF_KEYS, q.diff, d);
+          if (id === 'len') q.len[q.sport] = cyc(sp.lens.map(x => x[0]), q.len[q.sport], d);
+          if (id === 'time') q.time = cyc(TIMES.map(x => x[0]), q.time, d);
+          self.render(true);
+        },
+        bind: r => { r.querySelector('#qGo').onclick = () => self.go('controllers'); },
       },
 
       quick: {
@@ -280,12 +354,13 @@ export class UI {
               <div class="ccol" style="--p:${b.kit.primary}"><div class="cch">${crest(b, 44)}<b>${b.name}</b></div>${col(1)}</div>
             </div>
             ${self.q.mode === 'cup' ? '<div class="hint c">杯赛中所有真人玩家都将加入你的俱乐部</div>' : ''}
+            ${self.q.mode === 'sport' && self.q.sport !== 'basketball' ? '<div class="hint c">单打比赛：每一方由该侧的第一位玩家操控 · 你的球员始终在靠近镜头的一侧</div>' : ''}
             <div class="row c"><button class="btn" data-nav id="cHelp">按键说明</button><button class="btn primary big" data-nav data-focus id="cGo">开 始 比 赛</button></div>`;
         },
         bind: r => {
           r.querySelectorAll('.dev[data-dev]').forEach(e => e.onclick = () => self.moveDevice(e.dataset.dev, 1, true));
           r.querySelector('#cGo').onclick = () => self.startFromSetup();
-          r.querySelector('#cHelp').onclick = () => self.controlsOverlay();
+          r.querySelector('#cHelp').onclick = () => self.controlsOverlay(null, self.q.mode === 'sport' ? self.q.sport : null);
         },
       },
 
@@ -477,6 +552,10 @@ export class UI {
     if (q.mode === 'cup') {
       const ct = this.cupTeams;
       cfg = { mode: 'cup', teamA: ct.a, teamB: ct.b, diff: ct.cup.diff, duration: this.save.s.duration, time: ['day', 'sunset', 'night'][ct.round], weather: Math.random() < 0.2 ? (Math.random() < 0.5 ? 'rain' : 'snow') : 'clear', cage: false, knockout: true, title: `${ct.cup.name} · ${ROUND_NAMES[ct.round]}`, humans: humans.map(h => ({ ...h, team: 0 })) };
+    } else if (q.mode === 'sport') {
+      const T = this.allTeams, sp = SPORTS[q.sport];
+      cfg = { mode: 'sport', sport: q.sport, teamA: T[q.a], teamB: T[q.b], diff: q.diff, time: q.sport === 'tennis' ? q.time : 'night', weather: 'clear', humans, title: `${sp.name} · 友谊赛` };
+      if (q.sport === 'basketball') cfg.duration = q.len.basketball; else cfg.length = q.len[q.sport];
     } else {
       const T = this.allTeams;
       cfg = { mode: q.mode, teamA: T[q.a], teamB: T[q.b], diff: q.diff, duration: q.dur, time: q.time, weather: q.weather, cage: q.cage, humans, title: q.mode === 'shootout' ? '点球大战' : '友谊赛' };
@@ -512,6 +591,31 @@ export class UI {
     }, () => { this.closeOverlay(); extra.buttons[extra.buttons.length - 1].fn(); });
   }
 }
+
+UI.prototype.showSportResult = function (res, extra) {
+  const [A, B] = res.teams;
+  const hs = res.teams.filter(t => t.human).length, ht = res.teams.findIndex(t => t.human);
+  const solo = hs === 1;
+  const title = solo ? (res.winner === ht ? '胜 利！' : '失 利') : `${res.teams[res.winner].name} 获胜`;
+  const cls = solo && res.winner !== ht ? 'lose' : 'win';
+  const row = ([n, a, b]) => {
+    const na = parseFloat(a) || 0, nb = parseFloat(b) || 0, tot = (na + nb) || 1;
+    return `<div class="srow"><b>${a}</b><div class="sbar"><i style="width:${na / tot * 100}%;background:${A.kit.primary}"></i><i style="width:${nb / tot * 100}%;background:${B.kit.primary}"></i></div><span>${n}</span><div class="sbar r"></div><b>${b}</b></div>`;
+  };
+  this.overlay(`<div class="result">
+    <div class="res-t ${cls}">${title}</div>
+    <div class="res-score"><div class="rs-team">${crest(A, 60)}<b>${A.name}</b></div>
+      <div class="rs-num">${res.scoreA} : ${res.scoreB}${res.ot ? '<small>加时决胜</small>' : ''}</div>
+      <div class="rs-team">${crest(B, 60)}<b>${B.name}</b></div></div>
+    <div class="res-stats">${(res.rows || []).map(row).join('')}</div>
+    ${res.note ? `<div class="res-note">${res.note}</div>` : ''}
+    ${res.mvp ? `<div class="mvp">⭐ 全场最佳：<b>${res.mvp.name}</b> <span>${res.mvp.text}</span></div>` : ''}
+    ${extra.coins ? `<div class="reward">🪙 +${extra.coins}${extra.msg ? ' · ' + extra.msg : ''}</div>` : ''}
+    <div class="row c">${extra.buttons.map((b, i) => `<button class="btn ${i === 0 ? 'primary big' : ''}" data-nav ${i === 0 ? 'data-focus' : ''} data-i="${i}">${b.label}</button>`).join('')}</div>
+  </div>`, o => {
+    o.querySelectorAll('[data-i]').forEach(e => e.onclick = () => { this.closeOverlay(); extra.buttons[+e.dataset.i].fn(); });
+  }, () => { this.closeOverlay(); extra.buttons[extra.buttons.length - 1].fn(); });
+};
 
 function cyc(arr, v, d) { const i = arr.indexOf(v); return arr[((i < 0 ? 0 : i) + d + arr.length) % arr.length]; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }

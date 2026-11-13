@@ -1,7 +1,7 @@
 {
   "name": "blazing-pitch-desktop",
   "productName": "Blazing Pitch",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "热血绿茵 · Blazing Pitch —— Steam 桌面版外壳",
   "main": "main.cjs",
   "private": true,
